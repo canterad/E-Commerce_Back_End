@@ -3,12 +3,13 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // The `/api/products` endpoint
 
-// GET a all products
+// GET a all products.
 router.get('/', async (req, res) => {
   try 
   {
+    // Call the findAll method of the Product model to get all of the rows from the Product table. 
     const productData = await Product.findAll({
-      // JOIN with Category and Tag, using the ProductTag through table
+      // JOIN with Category and Tag, using the ProductTag through table.
       include: 
       [
         {
@@ -20,18 +21,22 @@ router.get('/', async (req, res) => {
       ]
     });      
  
+    // Return the productData - All Product rows in the table.    
     res.status(200).json(productData);
   } 
   catch (err) 
   {
+    // Return the status 500 and the error object.    
     res.status(500).json(err);
   }
 });
 
-// GET a single product
+// GET a single product.
 router.get('/:id', async (req, res) => {
   try 
   {
+    // Call the findByPk method of the Product model to get the record from the Product table
+    // that matches the id value.    
     const productData = await Product.findByPk(req.params.id, {
       // JOIN with Category and Tag, using the ProductTag through table.
       include: 
@@ -45,21 +50,22 @@ router.get('/:id', async (req, res) => {
       ]
     });
 
+    // If the Product id not found tell the user.    
     if (!productData) {
       res.status(404).json({ message: 'No product found with this id!' });
       return;
     }
-
-    console.log(productData.dataValues.tags[0].dataValues.product_tag.dataValues);
+    // Return the productData item - Row that matches the id value passed in.
     res.status(200).json(productData);
   } 
   catch (err) 
   {
+    // Return the status code of 500 - the error object.    
     res.status(500).json(err);
   }
 });
 
-// create new product
+// create new product.
 router.post('/', (req, res) => {
   // req.body should look like this...
   //  {
@@ -69,6 +75,7 @@ router.post('/', (req, res) => {
   //    tagIds: [1, 2, 3, 4]
   //  }
   
+    // Call the create method of the Product model to add a new row to the Product table.  
   Product.create(req.body)
     .then((product) => {
       // if there's product tags, we need to create pairings to bulk create in the ProductTag model
@@ -81,10 +88,14 @@ router.post('/', (req, res) => {
         });
         return ProductTag.bulkCreate(productTagIdArr);
       }
-      // if no product tags, just respond
+      // if no product tags, just respond.
       res.status(200).json(product);
     })
+    
+    // Send the Product Tag Ids as a JSON object.
     .then((productTagIds) => res.status(200).json(productTagIds))
+    
+    // Send the status code of 400 and the error object.
     .catch((err) => {
       console.log(err);
       res.status(400).json(err);
@@ -122,8 +133,8 @@ router.put('/:id', (req, res) => {
 
       // run both actions
       return Promise.all([
-        Product_Tag.destroy({ where: { id: productTagsToRemove } }),
-        Product_Tag.bulkCreate(newProductTags),
+        ProductTag.destroy({ where: { id: productTagsToRemove } }),
+        ProductTag.bulkCreate(newProductTags),
       ]);
     })
     .then((updatedProductTags) => res.json(updatedProductTags))
@@ -133,11 +144,12 @@ router.put('/:id', (req, res) => {
     });
 });
 
-
 // DELETE a Product
 router.delete('/:id', async (req, res) => {
   try 
   {
+    // Call the destroy method of the Product model to delete the Product row in the table 
+    // based on id given in the request parameters.    
     const productData = await Product.destroy({
       where: 
       {
@@ -145,16 +157,12 @@ router.delete('/:id', async (req, res) => {
       }
     });
 
-    if (!productData) 
-    {
-      res.status(404).json({ message: 'No product found with this id!' });
-      return;
-    }
-
-    res.status(200).json(productData);
+    // Tell the user that the Product record was deleted successfully.
+    res.status(200).json({ message: "The Product record with the id value: " + req.params.id.toString() + " was deleted successfully." });    
   } 
   catch (err) 
   {
+    // Return the error object.          
     res.status(500).json(err);
   }
 });
